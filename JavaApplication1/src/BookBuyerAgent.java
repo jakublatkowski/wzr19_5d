@@ -18,13 +18,22 @@ import java.util.*;
 class MyOwnBehaviour extends Behaviour
 {
   protected MyOwnBehaviour()
-  {
+  {  System.out.println("Konstruktor w MyOwnBehavior");
+
   }
 
+  protected void setup()
+  {
+            System.out.println("Setup w MyOwnBehavior");
+
+  }
   public void action()
   {
+      System.out.println("Action w MyOwnBehavior");
   }
   public boolean done() {
+            System.out.println("Done w MyOwnBehavior");
+
     return false;
   }
 }

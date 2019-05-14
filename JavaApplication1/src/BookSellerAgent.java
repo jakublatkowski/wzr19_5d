@@ -16,6 +16,8 @@ import java.lang.*;
 
 public class BookSellerAgent extends Agent
 {
+    
+  public int staraCena = 0;
   // Katalog lektur na sprzedaż:
   private Hashtable catalogue;
 
@@ -72,6 +74,7 @@ public class BookSellerAgent extends Agent
                    title);
           ACLMessage reply = msg.createReply();               // tworzenie wiadomości - odpowiedzi
           Integer price = (Integer) catalogue.get(title);     // ustalenie ceny dla podanego tytułu
+          staraCena = price;
           if (price != null) {                                // jeśli taki tytuł jest dostępny
             reply.setPerformative(ACLMessage.PROPOSE);            // ustalenie typu wiadomości (propozycja)
             reply.setContent(String.valueOf(price.intValue()));   // umieszczenie ceny w polu zawartości (content)
@@ -94,19 +97,42 @@ public class BookSellerAgent extends Agent
 
 
     class PurchaseOrdersServer extends CyclicBehaviour
-    {
+    {int oldPrice = 0;
+        
+        
       public void action()
       {
         ACLMessage msg = myAgent.receive();
-
-        if ((msg != null)&&(msg.getPerformative() == ACLMessage.ACCEPT_PROPOSAL))
+        
+        if (msg != null)
         {
-          // Message received. Process it
-          ACLMessage reply = msg.createReply();
-          String title = msg.getContent();
-          reply.setPerformative(ACLMessage.INFORM);
-          System.out.println("Agent sprzedający (wersja d <2018/19>) "+getAID().getName()+" sprzedał książkę: "+title);
-          myAgent.send(reply);
+            if(msg.getPerformative() == ACLMessage.ACCEPT_PROPOSAL)
+            {
+              // Message received. Process it          
+              ACLMessage reply = msg.createReply();
+              String title = msg.getContent();
+              reply.setPerformative(ACLMessage.INFORM);
+              System.out.println("Agent sprzedający (wersja d <2018/19>) "+getAID().getName()+" sprzedał książkę: "+title);
+              myAgent.send(reply);
+            }
+            if (msg.getPerformative() == ACLMessage.PROPOSE)
+            {
+                Integer proposedPrice = Integer.parseInt(msg.getInReplyTo());
+                
+                Integer newPrice = (Integer)(3 * staraCena / 4 + proposedPrice / 4);
+                staraCena = newPrice;
+                ACLMessage reply = msg.createReply();               // tworzenie wiadomości - odpowiedzi
+                reply.setPerformative(ACLMessage.PROPOSE);            // ustalenie typu wiadomości (propozycja)
+                
+                reply.setContent(String.valueOf(newPrice));   // umieszczenie ceny w polu zawartości (content)
+                System.out.println("Agent-sprzedawca "+getAID().getName()+" odpowiada: "+ newPrice);
+            }
+            
+            if(msg.getPerformative() == ACLMessage.REFUSE)
+            {
+                System.out.println("Agent-sprzedawca otrzymał: Odmowa dalszych negocjacji");
+                block(); 
+            }
         }
       }
     } // Koniec klasy wewnętrznej będącej rozszerzeniem klasy CyclicBehaviour
