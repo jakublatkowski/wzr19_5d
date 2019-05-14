@@ -101,7 +101,7 @@ public class BookSellerAgent extends Agent
 
         if ((msg != null)&&(msg.getPerformative() == ACLMessage.ACCEPT_PROPOSAL))
         {
-          // Message received. Process it          
+          // Message received. Process it
           ACLMessage reply = msg.createReply();
           String title = msg.getContent();
           reply.setPerformative(ACLMessage.INFORM);
