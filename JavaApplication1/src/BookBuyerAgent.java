@@ -91,6 +91,7 @@ public class BookBuyerAgent extends Agent {
       private int repliesCnt = 0; // liczba odpowiedzi od agentów
       private MessageTemplate mt; // szablon odpowiedzi
       private int step = 0;       // krok
+      private int negocjacja = 0;
 
       public void action()
       {
@@ -144,11 +145,30 @@ public class BookBuyerAgent extends Agent {
           }
           break;
         case 2:      // wysłanie zamówienia do sprzedawcy, który złożył najlepszą ofertę
-          ACLMessage order = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
+          if (negocjacja == 0){
+            bestPrice = bestPrice / 2;             
+          }
+          else if (negocjacja < 6){
+            bestPrice = bestPrice + 5;
+          }
+          else {
+              ACLMessage order = new ACLMessage(ACLMessage.REFUSE);
+              order.addReceiver(bestSeller);
+              order.setContent(targetBookTitle);
+              order.setConversationId("handel_ksiazkami");
+              order.setReplyWith(""+bestPrice); 
+              myAgent.send(order);
+              System.out.println("Seller nie chcial mnie, poradze sobie bez tej ksiazki");
+              step = 4;
+              break;
+          }
+          negocjacja++;
+          
+          ACLMessage order = new ACLMessage(ACLMessage.PROPOSE);
           order.addReceiver(bestSeller);
           order.setContent(targetBookTitle);
           order.setConversationId("handel_ksiazkami");
-          order.setReplyWith("order"+System.currentTimeMillis());
+          order.setReplyWith(""+bestPrice); 
           myAgent.send(order);
           mt = MessageTemplate.and(MessageTemplate.MatchConversationId("handel_ksiazkami"),
                                    MessageTemplate.MatchInReplyTo(order.getReplyWith()));
@@ -163,6 +183,26 @@ public class BookBuyerAgent extends Agent {
               System.out.println("Tytuł "+targetBookTitle+" zamówiony!");
               System.out.println("Po cenie: "+bestPrice);
               myAgent.doDelete();
+            }
+            else if (reply.getPerformative() == ACLMessage.PROPOSE)
+            {
+                int nowaCena = Integer.parseInt(reply.getInReplyTo());
+                if (nowaCena >= bestPrice){
+                    bestPrice = nowaCena;
+                    order = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
+                    order.addReceiver(bestSeller);
+                    order.setContent(targetBookTitle);
+                    order.setConversationId("handel_ksiazkami");
+                    order.setReplyWith(""+bestPrice); 
+                    myAgent.send(order);
+                    mt = MessageTemplate.and(MessageTemplate.MatchConversationId("handel_ksiazkami"),
+                                             MessageTemplate.MatchInReplyTo(order.getReplyWith()));
+                    break;
+                }
+                else if (nowaCena < bestPrice){
+                    step = 2;
+                    break;
+                }
             }
             step = 4;
           }
