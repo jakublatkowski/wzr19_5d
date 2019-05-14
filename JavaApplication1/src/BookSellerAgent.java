@@ -127,7 +127,12 @@ public class BookSellerAgent extends Agent
                 reply.setContent(String.valueOf(newPrice));   // umieszczenie ceny w polu zawartości (content)
                 System.out.println("Agent-sprzedawca "+getAID().getName()+" odpowiada: "+ newPrice);
             }
-        
+            
+            if(msg.getPerformative() == ACLMessage.REFUSE)
+            {
+                System.out.println("Agent-sprzedawca otrzymał: Odmowa dalszych negocjacji");
+                block(); 
+            }
         }
       }
     } // Koniec klasy wewnętrznej będącej rozszerzeniem klasy CyclicBehaviour
