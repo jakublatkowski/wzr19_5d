@@ -117,15 +117,17 @@ public class BookSellerAgent extends Agent
             }
             if (msg.getPerformative() == ACLMessage.PROPOSE)
             {
-                Integer proposedPrice = Integer.parseInt(msg.getInReplyTo());
+                System.out.println("getinReplyto: " + msg.getReplyWith());
+                int proposedPrice = Integer.parseInt(msg.getReplyWith());
                 
                 Integer newPrice = (Integer)(3 * staraCena / 4 + proposedPrice / 4);
                 staraCena = newPrice;
                 ACLMessage reply = msg.createReply();               // tworzenie wiadomości - odpowiedzi
                 reply.setPerformative(ACLMessage.PROPOSE);            // ustalenie typu wiadomości (propozycja)
                 
-                reply.setContent(String.valueOf(newPrice));   // umieszczenie ceny w polu zawartości (content)
+                reply.setReplyWith(String.valueOf(newPrice));   // umieszczenie ceny w polu zawartości (content)
                 System.out.println("Agent-sprzedawca "+getAID().getName()+" odpowiada: "+ newPrice);
+                myAgent.send(reply);
             }
             
             if(msg.getPerformative() == ACLMessage.REFUSE)

@@ -146,12 +146,15 @@ public class BookBuyerAgent extends Agent {
           break;
         case 2:      // wysłanie zamówienia do sprzedawcy, który złożył najlepszą ofertę
           if (negocjacja == 0){
+            System.out.println("negocjacja nr "+ negocjacja);
             bestPrice = bestPrice / 2;             
           }
-          else if (negocjacja < 6){
+          else if (negocjacja < 50){
+            System.out.println("negocjacja nr "+ negocjacja);
             bestPrice = bestPrice + 5;
           }
           else {
+            System.out.println("negocjacja nr "+ negocjacja);
               ACLMessage order = new ACLMessage(ACLMessage.REFUSE);
               order.addReceiver(bestSeller);
               order.setContent(targetBookTitle);
@@ -178,6 +181,7 @@ public class BookBuyerAgent extends Agent {
           reply = myAgent.receive(mt);
           if (reply != null)
           {
+            System.out.println("Dostalem Odpowiedz");
             if (reply.getPerformative() == ACLMessage.INFORM)
             {
               System.out.println("Tytuł "+targetBookTitle+" zamówiony!");
@@ -186,8 +190,9 @@ public class BookBuyerAgent extends Agent {
             }
             else if (reply.getPerformative() == ACLMessage.PROPOSE)
             {
-                int nowaCena = Integer.parseInt(reply.getInReplyTo());
-                if (nowaCena >= bestPrice){
+                System.out.println("Dostalem Odpowiedz do negocjacji");
+                int nowaCena = Integer.parseInt(reply.getReplyWith());
+                if (nowaCena <= bestPrice){
                     bestPrice = nowaCena;
                     order = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
                     order.addReceiver(bestSeller);
@@ -199,7 +204,7 @@ public class BookBuyerAgent extends Agent {
                                              MessageTemplate.MatchInReplyTo(order.getReplyWith()));
                     break;
                 }
-                else if (nowaCena < bestPrice){
+                else if (nowaCena > bestPrice){
                     step = 2;
                     break;
                 }
