@@ -150,8 +150,8 @@ public class BookBuyerAgent extends Agent {
               order.setReplyWith(""+bestPrice); 
               myAgent.send(order);
               System.out.println("Seller nie chcial mnie, poradze sobie bez tej ksiazki");
-              
               step = 4;
+              break;
           }
           negocjacja++;
           
