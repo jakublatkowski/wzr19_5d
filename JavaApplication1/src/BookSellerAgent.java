@@ -49,8 +49,8 @@ public void ReadFromFile() throws IOException
     
     String[] tmp = values.split(";");
     
-    zyski[0] = Integer.getInteger(tmp[0]);
-    zyski[1] = Integer.getInteger(tmp[1]);
+    zyski[0] = Integer.parseInt(tmp[0]);
+    zyski[1] = Integer.parseInt(tmp[1]);
     
     reader.close();
 }
@@ -77,6 +77,7 @@ public void ReadFromFile() throws IOException
     }
     catch(Exception e)
     {
+        System.out.println("Try catch sie nie udal");
         try {
             SaveToFile();
         } catch (IOException ex) {
@@ -131,6 +132,7 @@ public void ReadFromFile() throws IOException
                 realizowanaStrategia = zyski[0] <= zyski[1];
             else
                 realizowanaStrategia = zyski[1] <= zyski[0];
+            realizowanaStrategia = true;
           }
           else {                                              // jeśli tytuł niedostępny
             // The requested book is NOT available for sale.
@@ -206,7 +208,7 @@ public void ReadFromFile() throws IOException
               System.out.println("Agent sprzedający (wersja d <2018/19>) "+getAID().getName()+" sprzedał książkę: "+title);
               myAgent.send(reply);
               
-              int zysk = staraCena - 50 - liczbaWykonanychKrokow * kosztKroku;
+              int zysk = staraCena - 25 - liczbaWykonanychKrokow * kosztKroku;
               System.out.println("Seller zysk =" +zysk);
               
               if(realizowanaStrategia == false && zyski[0] < zysk) //strategia D

@@ -12,7 +12,14 @@ import jade.core.Agent;
 import jade.core.AID;
 import jade.core.behaviours.*;
 import jade.lang.acl.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 // Przykładowa klasa zachowania:
 class MyOwnBehaviour extends Behaviour
@@ -47,6 +54,32 @@ public class BookBuyerAgent extends Agent {
       new AID("seller1", AID.ISLOCALNAME),
       new AID("seller2", AID.ISLOCALNAME)};
     
+    boolean realizowanaStrategia = true; //   0 strategia H, 1 strategia D
+    int[] zyski = new int[2];  
+    int kosztKroku = 1;
+
+    public void SaveToFile() throws IOException
+    {
+        String fileContent = String.valueOf(zyski[0]) + ';' + String.valueOf(zyski[1]);
+
+        BufferedWriter writer = new BufferedWriter(new FileWriter("buyerZyski.txt"));
+        writer.write(fileContent);
+        writer.close();
+    }
+
+    public void ReadFromFile() throws IOException
+    {
+        BufferedReader reader = new BufferedReader(new FileReader("buyerZyski.txt"));
+        String values = reader.readLine();
+
+        String[] tmp = values.split(";");
+
+        zyski[0] = Integer.parseInt(tmp[0]);
+        zyski[1] = Integer.parseInt(tmp[1]);
+
+        reader.close();
+    }
+    
     // Inicjalizacja klasy agenta:
     protected void setup()
     {
@@ -71,6 +104,18 @@ public class BookBuyerAgent extends Agent {
         System.out.println("Proszę podać tytuł lektury w argumentach wejściowych agenta kupującego!");
         doDelete();
       }
+      
+    try{
+        ReadFromFile();
+    }
+    catch(Exception e)
+    {
+        try {
+            SaveToFile();
+        } catch (IOException ex) {
+            Logger.getLogger(BookSellerAgent.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
     }
     // Metoda realizująca zakończenie pracy agenta:
     protected void takeDown()
@@ -104,6 +149,11 @@ public class BookBuyerAgent extends Agent {
           }
           System.out.println();
 
+            if(new Random().nextInt(100) < 60)
+                realizowanaStrategia = zyski[0] <= zyski[1];
+            else
+                realizowanaStrategia = zyski[1] <= zyski[0];
+            
           // Tworzenie wiadomości CFP do wszystkich sprzedawców:
           ACLMessage cfp = new ACLMessage(ACLMessage.CFP);
           for (int i = 0; i < sellerAgents.length; ++i)
@@ -145,38 +195,50 @@ public class BookBuyerAgent extends Agent {
           }
           break;
         case 2:      // wysłanie zamówienia do sprzedawcy, który złożył najlepszą ofertę
-          if (negocjacja == 0){
-            System.out.println("negocjacja nr "+ negocjacja);
-            bestPrice = bestPrice / 2;             
-          }
-          else if (negocjacja < 66){
-            System.out.println("negocjacja nr "+ negocjacja);
-            bestPrice = bestPrice + 5;
-          }
-          else {
-            System.out.println("negocjacja nr "+ negocjacja);
-              ACLMessage order = new ACLMessage(ACLMessage.REFUSE);
-              order.addReceiver(bestSeller);
-              order.setContent(targetBookTitle);
-              order.setConversationId("handel_ksiazkami");
-              order.setReplyWith(""+bestPrice); 
-              myAgent.send(order);
-              System.out.println("Seller nie chcial mnie, poradze sobie bez tej ksiazki");
-              step = 4;
-              break;
-          }
-          negocjacja++;
-          
-          ACLMessage order = new ACLMessage(ACLMessage.PROPOSE);
-          order.addReceiver(bestSeller);
-          order.setContent(targetBookTitle);
-          order.setConversationId("handel_ksiazkami");
-          order.setReplyWith(""+bestPrice); 
-          myAgent.send(order);
-          mt = MessageTemplate.and(MessageTemplate.MatchConversationId("handel_ksiazkami"),
-                                   MessageTemplate.MatchInReplyTo(order.getReplyWith()));
-          step = 3;
-          break;
+            if (realizowanaStrategia){
+                if (negocjacja == 0){
+                  System.out.println("negocjacja nr "+ negocjacja);
+                  bestPrice = bestPrice / 2;             
+                }
+                else if (negocjacja < 6){
+                  System.out.println("negocjacja nr "+ negocjacja);
+                  bestPrice = bestPrice + 6;
+                }
+                else {
+                  System.out.println("negocjacja nr "+ negocjacja);
+                    ACLMessage order = new ACLMessage(ACLMessage.REFUSE);
+                    order.addReceiver(bestSeller);
+                    order.setContent(targetBookTitle);
+                    order.setConversationId("handel_ksiazkami");
+                    order.setReplyWith(""+bestPrice); 
+                    myAgent.send(order);
+                    System.out.println("Seller nie chcial mnie, poradze sobie bez tej ksiazki");
+                    step = 4;
+                    break;
+                }
+                }
+            else {
+                if (negocjacja == 0){
+                  System.out.println("negocjacja nr "+ negocjacja);
+                  bestPrice = bestPrice / 2;             
+                }
+                else{
+                  System.out.println("negocjacja nr "+ negocjacja);
+                  bestPrice = bestPrice + 4;
+                }                
+            }
+            negocjacja++;
+
+            ACLMessage order = new ACLMessage(ACLMessage.PROPOSE);
+            order.addReceiver(bestSeller);
+            order.setContent(targetBookTitle);
+            order.setConversationId("handel_ksiazkami");
+            order.setReplyWith(""+bestPrice); 
+            myAgent.send(order);
+            mt = MessageTemplate.and(MessageTemplate.MatchConversationId("handel_ksiazkami"),
+                                     MessageTemplate.MatchInReplyTo(order.getReplyWith()));
+            step = 3;
+            break;
         case 3:      // odbiór odpowiedzi na zamównienie
           reply = myAgent.receive(mt);
           if (reply != null)
@@ -188,26 +250,69 @@ public class BookBuyerAgent extends Agent {
               System.out.println("Po cenie: "+bestPrice);
               myAgent.doDelete();
             }
+            else if(reply.getPerformative() == ACLMessage.REFUSE)
+            {
+                System.out.println("Agent-sprzedawca odmowił dalszych negocjacji");
+                step = 4;
+                block();
+            }
             else if (reply.getPerformative() == ACLMessage.PROPOSE)
             {
                 System.out.println("Dostalem Odpowiedz do negocjacji");
                 int nowaCena = Integer.parseInt(reply.getReplyWith());
-                if (nowaCena <= bestPrice + 2){
-                    bestPrice = nowaCena;
-                    order = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
-                    order.addReceiver(bestSeller);
-                    order.setContent(targetBookTitle);
-                    order.setConversationId("handel_ksiazkami");
-                    order.setReplyWith(""+bestPrice); 
-                    myAgent.send(order);
-                    mt = MessageTemplate.and(MessageTemplate.MatchConversationId("handel_ksiazkami"),
-                                             MessageTemplate.MatchInReplyTo(order.getReplyWith()));
-                    break;
+                
+                if(realizowanaStrategia){
+                    if (nowaCena <= bestPrice + 2){
+                        bestPrice = nowaCena;
+                        order = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
+                        order.addReceiver(bestSeller);
+                        order.setContent(targetBookTitle);
+                        order.setConversationId("handel_ksiazkami");
+                        order.setReplyWith(""+bestPrice); 
+                        myAgent.send(order);
+                        mt = MessageTemplate.and(MessageTemplate.MatchConversationId("handel_ksiazkami"),
+                                                 MessageTemplate.MatchInReplyTo(order.getReplyWith()));
+                    }
+                    else if (nowaCena > bestPrice){
+                        step = 2;
+                        break;
+                    }                    
+                }else{
+                    if (nowaCena <= bestPrice + 4){
+                        bestPrice = nowaCena;
+                        order = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
+                        order.addReceiver(bestSeller);
+                        order.setContent(targetBookTitle);
+                        order.setConversationId("handel_ksiazkami");
+                        order.setReplyWith(""+bestPrice); 
+                        myAgent.send(order);
+                        mt = MessageTemplate.and(MessageTemplate.MatchConversationId("handel_ksiazkami"),
+                                                 MessageTemplate.MatchInReplyTo(order.getReplyWith()));
+                    }
+                    else if (nowaCena > bestPrice){
+                        step = 2;
+                        break;
+                    }
                 }
-                else if (nowaCena > bestPrice){
-                    step = 2;
-                    break;
+                int zysk = 50 - bestPrice - negocjacja * kosztKroku;
+                System.out.println("Buyer zysk = "+zysk);
+                if(realizowanaStrategia == true && zyski[0] < zysk) //strategia D
+                {
+                    zyski[0] = zysk;
+
                 }
+                if(realizowanaStrategia == false && zyski[1] < zysk)// strategia H
+                {
+                    zyski[1] = zysk;
+                }
+
+                  try {
+                      SaveToFile();
+                  } catch (Exception ex) {
+                      Logger.getLogger(BookSellerAgent.class.getName()).log(Level.SEVERE, null, ex);
+                  }
+                break;
+                
             }
             step = 4;
           }
