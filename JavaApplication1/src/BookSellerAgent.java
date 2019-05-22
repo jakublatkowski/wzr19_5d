@@ -75,7 +75,7 @@ public void ReadFromFile() throws IOException
     try{
         ReadFromFile();
     }
-    catch(IOException e)
+    catch(Exception e)
     {
         try {
             SaveToFile();
