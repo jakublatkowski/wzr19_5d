@@ -206,15 +206,18 @@ public void ReadFromFile() throws IOException
               System.out.println("Agent sprzedający (wersja d <2018/19>) "+getAID().getName()+" sprzedał książkę: "+title);
               myAgent.send(reply);
               
-              int zysk = oldPrice - 50 - liczbaWykonanychKrokow * kosztKroku;
+              int zysk = staraCena - 50 - liczbaWykonanychKrokow * kosztKroku;
+              System.out.println("Seller zysk =" +zysk);
               
               if(realizowanaStrategia == false && zyski[0] < zysk) //strategia D
               {
+                  System.out.println("Seller wpisuje zysk strategia D: " +zysk);
                   zyski[0] = zysk;
                   
               }
               if(realizowanaStrategia == true && zyski[1] < zysk)// strategia H
               {
+                  System.out.println("Seller wpisuje zysk strategia H: " + zysk);
                   zyski[1] = zysk;
               }
               
