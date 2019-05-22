@@ -10,8 +10,15 @@
 import jade.core.Agent;
 import jade.core.behaviours.*;
 import jade.lang.acl.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 import java.lang.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 public class BookSellerAgent extends Agent
@@ -24,6 +31,29 @@ public class BookSellerAgent extends Agent
   public int staraCena = 0;
   // Katalog lektur na sprzedaż:
   private Hashtable catalogue;
+  
+  
+public void SaveToFile() throws IOException
+{
+    String fileContent = String.valueOf(zyski[0]) + ';' + String.valueOf(zyski[1]);
+     
+    BufferedWriter writer = new BufferedWriter(new FileWriter("sellerZyski.txt"));
+    writer.write(fileContent);
+    writer.close();
+}
+
+public void ReadFromFile() throws IOException
+{
+    BufferedReader reader = new BufferedReader(new FileReader("sellerZyski.txt"));
+    String values = reader.readLine();
+    
+    String[] tmp = values.split(";");
+    
+    zyski[0] = Integer.getInteger(tmp[0]);
+    zyski[1] = Integer.getInteger(tmp[1]);
+    
+    reader.close();
+}
 
   // Inicjalizacja klasy agenta:
   protected void setup()
@@ -41,6 +71,18 @@ public class BookSellerAgent extends Agent
     doWait(2019);                     // czekaj 2 sekundy
 
     System.out.println("Witam! Agent-sprzedawca (wersja d <2018/19>) "+getAID().getName()+" jest gotów do działania!");
+    
+    try{
+        ReadFromFile();
+    }
+    catch(IOException e)
+    {
+        try {
+            SaveToFile();
+        } catch (IOException ex) {
+            Logger.getLogger(BookSellerAgent.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
 
     // Dodanie zachowania obsługującego odpowiedzi na oferty klientów (kupujących książki):
     addBehaviour(new OfferRequestsServer());
@@ -89,8 +131,6 @@ public class BookSellerAgent extends Agent
                 realizowanaStrategia = zyski[0] <= zyski[1];
             else
                 realizowanaStrategia = zyski[1] <= zyski[0];
-
-                        
           }
           else {                                              // jeśli tytuł niedostępny
             // The requested book is NOT available for sale.
@@ -178,6 +218,11 @@ public class BookSellerAgent extends Agent
                   zyski[1] = zysk;
               }
               
+                try {
+                    SaveToFile();
+                } catch (IOException ex) {
+                    Logger.getLogger(BookSellerAgent.class.getName()).log(Level.SEVERE, null, ex);
+                }
               
             }
             if (msg.getPerformative() == ACLMessage.PROPOSE)
