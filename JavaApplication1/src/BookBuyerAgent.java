@@ -149,7 +149,7 @@ public class BookBuyerAgent extends Agent {
             System.out.println("negocjacja nr "+ negocjacja);
             bestPrice = bestPrice / 2;             
           }
-          else if (negocjacja < 50){
+          else if (negocjacja < 66){
             System.out.println("negocjacja nr "+ negocjacja);
             bestPrice = bestPrice + 5;
           }
@@ -192,7 +192,7 @@ public class BookBuyerAgent extends Agent {
             {
                 System.out.println("Dostalem Odpowiedz do negocjacji");
                 int nowaCena = Integer.parseInt(reply.getReplyWith());
-                if (nowaCena <= bestPrice){
+                if (nowaCena <= bestPrice + 2){
                     bestPrice = nowaCena;
                     order = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
                     order.addReceiver(bestSeller);
