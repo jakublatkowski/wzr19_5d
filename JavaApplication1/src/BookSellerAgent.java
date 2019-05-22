@@ -83,7 +83,14 @@ public class BookSellerAgent extends Agent
             reply.setPerformative(ACLMessage.PROPOSE);            // ustalenie typu wiadomości (propozycja)
             reply.setContent(String.valueOf(price.intValue()));   // umieszczenie ceny w polu zawartości (content)
             System.out.println("Agent-sprzedawca "+getAID().getName()+" odpowiada: "+
-                   price.intValue());
+            price.intValue());
+            
+            if(new Random().nextInt(100) < 60)
+                realizowanaStrategia = zyski[0] <= zyski[1];
+            else
+                realizowanaStrategia = zyski[1] <= zyski[0];
+
+                        
           }
           else {                                              // jeśli tytuł niedostępny
             // The requested book is NOT available for sale.
@@ -175,7 +182,15 @@ public class BookSellerAgent extends Agent
             }
             if (msg.getPerformative() == ACLMessage.PROPOSE)
             {
-                StrategiaH(msg);
+                
+               if(realizowanaStrategia)
+               {
+                   StrategiaH(msg);
+               }else
+               {
+                   StrategiaD(msg);
+               }
+                
             }
             
             if(msg.getPerformative() == ACLMessage.REFUSE)
