@@ -16,7 +16,11 @@ import java.lang.*;
 
 public class BookSellerAgent extends Agent
 {
-    
+  boolean realizowanaStrategia = false; //   0 strategia D, 1 strategia H
+  int[] zyski = new int[2];  
+  int kosztKroku = 1;
+  int liczbaDostepnychKrokow = 4;
+  int liczbaWykonanychKrokow = 0;
   public int staraCena = 0;
   // Katalog lektur na sprzedaż:
   private Hashtable catalogue;
@@ -29,10 +33,10 @@ public class BookSellerAgent extends Agent
 
     Random randomGenerator = new Random();    // generator liczb losowych
 
-    catalogue.put("Zamek", 90+randomGenerator.nextInt(500));       // nazwa lektury jako klucz, cena jako wartość
-    catalogue.put("Opowiadania", 110+randomGenerator.nextInt(200));
-    catalogue.put("Ameryka", 300+randomGenerator.nextInt(70));
-    catalogue.put("Proces", 250+randomGenerator.nextInt(250));
+    catalogue.put("Zamek", 50);       // nazwa lektury jako klucz, cena jako wartość
+    catalogue.put("Opowiadania", 50);
+    catalogue.put("Ameryka", 50);
+    catalogue.put("Proces", 50);
 
     doWait(2019);                     // czekaj 2 sekundy
 
@@ -97,9 +101,49 @@ public class BookSellerAgent extends Agent
 
 
     class PurchaseOrdersServer extends CyclicBehaviour
-    {int oldPrice = 0;
+    {
+        int oldPrice = 0;
         
         
+    public void StrategiaD( ACLMessage msg)
+    {
+        System.out.println("getinReplyto: " + msg.getReplyWith());
+                int proposedPrice = Integer.parseInt(msg.getReplyWith());
+                
+                Integer newPrice = (Integer)(3 * staraCena / 4 + proposedPrice / 4);
+                staraCena = newPrice;
+                ACLMessage reply = msg.createReply();               // tworzenie wiadomości - odpowiedzi
+                reply.setPerformative(ACLMessage.PROPOSE);            // ustalenie typu wiadomości (propozycja)
+                
+                reply.setReplyWith(String.valueOf(newPrice));   // umieszczenie ceny w polu zawartości (content)
+                System.out.println("Agent-sprzedawca "+getAID().getName()+" odpowiada: "+ newPrice);
+                myAgent.send(reply);
+                liczbaWykonanychKrokow++;
+    }    
+    public void StrategiaH(ACLMessage msg)
+    {
+        if(liczbaDostepnychKrokow > liczbaWykonanychKrokow)
+        {
+            liczbaWykonanychKrokow++;
+            System.out.println("getinReplyto: " + msg.getReplyWith());
+            int proposedPrice = Integer.parseInt(msg.getReplyWith());
+
+            Integer newPrice = (Integer)(3 * staraCena / 4 + proposedPrice / 4);
+            staraCena = newPrice;
+            ACLMessage reply = msg.createReply();               // tworzenie wiadomości - odpowiedzi
+            reply.setPerformative(ACLMessage.PROPOSE);            // ustalenie typu wiadomości (propozycja)
+
+            reply.setReplyWith(String.valueOf(newPrice));   // umieszczenie ceny w polu zawartości (content)
+            System.out.println("Agent-sprzedawca "+getAID().getName()+" odpowiada: "+ newPrice);
+            myAgent.send(reply);
+        }else
+        {     
+            ACLMessage reply = msg.createReply();               // tworzenie wiadomości - odpowiedzi
+            reply.setPerformative(ACLMessage.REFUSE);
+            System.out.println("Agent-sprzedawca "+getAID().getName()+" odrzuca");
+        }
+    }
+    
       public void action()
       {
         ACLMessage msg = myAgent.receive();
@@ -114,20 +158,24 @@ public class BookSellerAgent extends Agent
               reply.setPerformative(ACLMessage.INFORM);
               System.out.println("Agent sprzedający (wersja d <2018/19>) "+getAID().getName()+" sprzedał książkę: "+title);
               myAgent.send(reply);
+              
+              int zysk = oldPrice - 50 - liczbaWykonanychKrokow * kosztKroku;
+              
+              if(realizowanaStrategia == false && zyski[0] < zysk) //strategia D
+              {
+                  zyski[0] = zysk;
+                  
+              }
+              if(realizowanaStrategia == true && zyski[1] < zysk)// strategia H
+              {
+                  zyski[1] = zysk;
+              }
+              
+              
             }
             if (msg.getPerformative() == ACLMessage.PROPOSE)
             {
-                System.out.println("getinReplyto: " + msg.getReplyWith());
-                int proposedPrice = Integer.parseInt(msg.getReplyWith());
-                
-                Integer newPrice = (Integer)(3 * staraCena / 4 + proposedPrice / 4);
-                staraCena = newPrice;
-                ACLMessage reply = msg.createReply();               // tworzenie wiadomości - odpowiedzi
-                reply.setPerformative(ACLMessage.PROPOSE);            // ustalenie typu wiadomości (propozycja)
-                
-                reply.setReplyWith(String.valueOf(newPrice));   // umieszczenie ceny w polu zawartości (content)
-                System.out.println("Agent-sprzedawca "+getAID().getName()+" odpowiada: "+ newPrice);
-                myAgent.send(reply);
+                StrategiaH(msg);
             }
             
             if(msg.getPerformative() == ACLMessage.REFUSE)
