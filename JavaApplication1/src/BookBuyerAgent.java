@@ -69,6 +69,15 @@ public class BookBuyerAgent extends Agent {
 
     public void ReadFromFile() throws IOException
     {
+        String S = "81w33ada";
+        for (int i = 0; i < S.length(); i++){
+            char ch = S.charAt(i);
+            System.out.println(S);
+        }
+            StringBuilder sb = new StringBuilder(S);
+            sb.insert(2, 'd');
+            System.out.println(sb);
+            
         BufferedReader reader = new BufferedReader(new FileReader("buyerZyski.txt"));
         String values = reader.readLine();
 
